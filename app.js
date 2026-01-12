@@ -35,17 +35,21 @@ class QuestionApp {
 
         if (this.isLoading) return;
 
+        const nameInput = document.getElementById('studentName');
         const questionInput = document.getElementById('questionText');
+
+        const name = nameInput.value.trim();
         const text = questionInput.value.trim();
 
-        if (!text) {
-            alert('Please enter a question');
+        if (!name || !text) {
+            alert('Please fill in all fields');
             return;
         }
 
-        // Create new question
+        // Create new question (author will be stored but not displayed)
         const question = {
             id: Date.now(),
+            author: name,
             text: text,
             votes: 0,
             timestamp: new Date().toISOString()
@@ -69,6 +73,7 @@ class QuestionApp {
             });
 
             // Clear form
+            nameInput.value = '';
             questionInput.value = '';
 
             // Show success feedback
