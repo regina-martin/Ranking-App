@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Question Voting App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Student Questions</h1>
+            <p class="subtitle">Post your questions and vote for the ones you'd like answered!</p>
+        </header>
+
+        <!-- Post Question Section -->
+        <section class="post-question-section">
+            <h2>Post a New Question</h2>
+            <form id="questionForm">
+                <div class="form-group">
+                    <label for="studentName">Your Name:</label>
+                    <input
+                        type="text"
+                        id="studentName"
+                        placeholder="Enter your name"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="questionText">Your Question:</label>
+                    <textarea
+                        id="questionText"
+                        placeholder="Type your question here..."
+                        rows="4"
+                        required
+                    ></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Post Question</button>
+            </form>
+        </section>
+
+        <!-- Questions Display Section -->
+        <section class="questions-section">
+            <div class="section-header">
+                <h2>All Questions</h2>
+                <div class="sort-controls">
+                    <label for="sortBy">Sort by:</label>
+                    <select id="sortBy">
+                        <option value="votes">Most Votes</option>
+                        <option value="recent">Most Recent</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="questionsList" class="questions-list">
+                <!-- Questions will be dynamically inserted here -->
+            </div>
+
+            <div id="emptyState" class="empty-state">
+                <p>No questions yet. Be the first to ask!</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
