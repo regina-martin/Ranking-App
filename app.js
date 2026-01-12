@@ -1,15 +1,23 @@
 // Student Question Voting App
+// Google Sheets API URL
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIzo-OTXRg9vSjlNBwIp6w7fJbFCOAfaUEmDaZWEnY-vsvLtOZlhYbI7VEUpYr8UWKbg/exec';
+
 class QuestionApp {
     constructor() {
-        this.questions = this.loadQuestions();
+        this.questions = [];
         this.votedQuestions = this.loadVotedQuestions();
         this.currentSort = 'votes';
+        this.isLoading = false;
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupEventListeners();
+        await this.loadQuestions();
         this.renderQuestions();
+
+        // Auto-refresh every 10 seconds to show new questions from other students
+        setInterval(() => this.loadQuestions(), 10000);
     }
 
     setupEventListeners() {
@@ -22,8 +30,10 @@ class QuestionApp {
         sortSelect.addEventListener('change', (e) => this.handleSortChange(e));
     }
 
-    handleSubmit(e) {
+    async handleSubmit(e) {
         e.preventDefault();
+
+        if (this.isLoading) return;
 
         const nameInput = document.getElementById('studentName');
         const questionInput = document.getElementById('questionText');
@@ -45,23 +55,68 @@ class QuestionApp {
             timestamp: new Date().toISOString()
         };
 
-        this.questions.push(question);
-        this.saveQuestions();
+        this.isLoading = true;
+        this.showLoadingMessage();
 
-        // Clear form
-        nameInput.value = '';
-        questionInput.value = '';
+        try {
+            // Post to Google Sheets
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'add',
+                    ...question
+                })
+            });
 
-        // Show success feedback
-        this.showSuccessMessage();
+            // Clear form
+            nameInput.value = '';
+            questionInput.value = '';
 
-        // Render updated list
-        this.renderQuestions();
+            // Show success feedback
+            this.showSuccessMessage();
+
+            // Reload questions from server
+            setTimeout(() => this.loadQuestions(), 1000);
+
+        } catch (error) {
+            console.error('Error posting question:', error);
+            alert('Failed to post question. Please try again.');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    showLoadingMessage() {
+        const form = document.getElementById('questionForm');
+        const existingMsg = form.querySelector('.status-message');
+        if (existingMsg) existingMsg.remove();
+
+        const loadingMsg = document.createElement('div');
+        loadingMsg.className = 'status-message';
+        loadingMsg.textContent = 'Posting question...';
+        loadingMsg.style.cssText = `
+            background: #2196F3;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 600;
+        `;
+        form.appendChild(loadingMsg);
     }
 
     showSuccessMessage() {
         const form = document.getElementById('questionForm');
+        const existingMsg = form.querySelector('.status-message');
+        if (existingMsg) existingMsg.remove();
+
         const successMsg = document.createElement('div');
+        successMsg.className = 'status-message';
         successMsg.textContent = '✓ Question posted successfully!';
         successMsg.style.cssText = `
             background: #4caf50;
@@ -79,12 +134,14 @@ class QuestionApp {
         }, 3000);
     }
 
-    handleVote(questionId) {
+    async handleVote(questionId) {
         const question = this.questions.find(q => q.id === questionId);
         if (!question) return;
 
         // Check if already voted
-        if (this.votedQuestions.includes(questionId)) {
+        const hasVoted = this.votedQuestions.includes(questionId);
+
+        if (hasVoted) {
             // Remove vote
             question.votes--;
             this.votedQuestions = this.votedQuestions.filter(id => id !== questionId);
@@ -94,9 +151,41 @@ class QuestionApp {
             this.votedQuestions.push(questionId);
         }
 
-        this.saveQuestions();
         this.saveVotedQuestions();
         this.renderQuestions();
+
+        try {
+            // Update vote in Google Sheets
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'vote',
+                    id: questionId,
+                    votes: question.votes
+                })
+            });
+
+            // Reload questions after a short delay
+            setTimeout(() => this.loadQuestions(), 1000);
+
+        } catch (error) {
+            console.error('Error updating vote:', error);
+            // Revert the vote on error
+            if (hasVoted) {
+                question.votes++;
+                this.votedQuestions.push(questionId);
+            } else {
+                question.votes--;
+                this.votedQuestions = this.votedQuestions.filter(id => id !== questionId);
+            }
+            this.saveVotedQuestions();
+            this.renderQuestions();
+            alert('Failed to update vote. Please try again.');
+        }
     }
 
     handleSortChange(e) {
@@ -175,16 +264,27 @@ class QuestionApp {
         return div.innerHTML;
     }
 
-    // Local Storage Methods
-    loadQuestions() {
-        const stored = localStorage.getItem('studentQuestions');
-        return stored ? JSON.parse(stored) : [];
+    // Google Sheets API Methods
+    async loadQuestions() {
+        try {
+            const response = await fetch(SCRIPT_URL);
+            const data = await response.json();
+
+            // Convert IDs to numbers for consistency
+            this.questions = data.map(q => ({
+                ...q,
+                id: Number(q.id),
+                votes: Number(q.votes) || 0
+            }));
+
+            this.renderQuestions();
+        } catch (error) {
+            console.error('Error loading questions:', error);
+            // Don't show alert on auto-refresh errors
+        }
     }
 
-    saveQuestions() {
-        localStorage.setItem('studentQuestions', JSON.stringify(this.questions));
-    }
-
+    // Local Storage Methods (only for voted questions tracking)
     loadVotedQuestions() {
         const stored = localStorage.getItem('votedQuestions');
         return stored ? JSON.parse(stored) : [];

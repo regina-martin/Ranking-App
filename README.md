@@ -7,10 +7,11 @@ A simple, user-friendly web application for college classrooms where students ca
 - **Post Questions**: Students can submit questions with their name
 - **Vote on Questions**: Upvote questions to show interest
 - **Real-time Ranking**: Questions are automatically ranked by votes
+- **Shared Data**: All students see the same questions in real-time using Google Sheets
 - **Sorting Options**: Sort by most votes or most recent
-- **Data Persistence**: Questions and votes are saved locally in the browser
+- **Auto-refresh**: Questions update automatically every 10 seconds
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
-- **No Server Required**: Runs entirely in the browser
+- **Instructor Dashboard**: View all questions in a Google Sheet
 
 ## How to Use
 
@@ -52,8 +53,9 @@ A simple, user-friendly web application for college classrooms where students ca
 ### Technology Stack
 
 - Pure HTML5, CSS3, and JavaScript (ES6+)
-- No external dependencies or frameworks required
-- Uses LocalStorage for data persistence
+- Google Sheets API for shared data storage
+- No external frameworks required
+- LocalStorage for tracking individual votes
 
 ### Browser Compatibility
 
@@ -82,10 +84,43 @@ Upload files to any web hosting service.
 
 ## Data Storage
 
-- Questions and votes are stored in the browser's LocalStorage
-- Data persists between sessions on the same browser
-- Each browser/device has its own separate data
-- To share data across devices, consider using a backend service (requires additional setup)
+- **Questions and votes** are stored in Google Sheets and shared across all students
+- **Vote tracking** (which questions each student voted on) is stored locally in the browser
+- Questions appear in real-time for all students
+- Instructors can view/export all data from the Google Sheet
+
+## Google Sheets Setup (For Instructors)
+
+The app is already configured with a Google Sheet backend. If you need to set up your own:
+
+### Step 1: Create Your Google Sheet
+1. Go to [sheets.google.com](https://sheets.google.com)
+2. Create a new spreadsheet named "Student Questions"
+3. Add these headers in row 1: `id`, `author`, `text`, `votes`, `timestamp`
+
+### Step 2: Create Apps Script
+1. In your sheet: Extensions → Apps Script
+2. Replace all code with the script from the deployment documentation
+3. Save the project
+
+### Step 3: Deploy as Web App
+1. Click Deploy → New deployment
+2. Select type: Web app
+3. Execute as: Me
+4. Who has access: Anyone
+5. Deploy and copy the URL
+
+### Step 4: Update app.js
+1. Open `app.js`
+2. Replace the `SCRIPT_URL` at the top with your new URL
+3. Save and redeploy to GitHub Pages
+
+### Viewing Your Data
+Open your Google Sheet anytime to see all questions and votes in a spreadsheet format. You can:
+- Export to Excel or CSV
+- Analyze voting patterns
+- Delete inappropriate questions
+- Archive questions for future reference
 
 ## Customization
 
@@ -106,25 +141,34 @@ Add or remove fields in the `index.html` form section.
 
 ## Privacy Notes
 
-- No data is sent to external servers
-- All data stays in the student's browser
-- No personal information is collected beyond what students choose to enter
-- Students can use anonymous names if preferred
+- Questions and votes are stored in a Google Sheet owned by the instructor
+- Student names are only what students choose to enter
+- Students can use anonymous or first names only if preferred
+- No email addresses or login credentials are collected
+- Data is only accessible to the sheet owner (instructor) and anyone with the sheet link
 
 ## Troubleshooting
 
 **Questions not appearing?**
+- Wait 10 seconds for auto-refresh, or reload the page
 - Check browser console for errors (F12)
 - Ensure JavaScript is enabled
-- Try clearing browser cache and reload
+- Verify the Google Apps Script is deployed and accessible
 
 **Votes not saving?**
-- LocalStorage must be enabled in browser settings
-- Some browsers in private/incognito mode may not persist data
+- Check your internet connection
+- Ensure the Google Sheet Apps Script is properly deployed
+- Check that "Who has access" is set to "Anyone" in the deployment settings
 
 **Can't see the app?**
 - Ensure all three files (index.html, styles.css, app.js) are in the same folder
 - Try a different browser
+- Make sure you're accessing via HTTPS (GitHub Pages)
+
+**Questions appearing slowly?**
+- Normal - there's a 1-2 second delay when posting
+- Questions auto-refresh every 10 seconds
+- Manual refresh (F5) will load immediately
 
 ## License
 
