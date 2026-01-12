@@ -35,21 +35,17 @@ class QuestionApp {
 
         if (this.isLoading) return;
 
-        const nameInput = document.getElementById('studentName');
         const questionInput = document.getElementById('questionText');
-
-        const name = nameInput.value.trim();
         const text = questionInput.value.trim();
 
-        if (!name || !text) {
-            alert('Please fill in all fields');
+        if (!text) {
+            alert('Please enter a question');
             return;
         }
 
         // Create new question
         const question = {
             id: Date.now(),
-            author: name,
             text: text,
             votes: 0,
             timestamp: new Date().toISOString()
@@ -73,7 +69,6 @@ class QuestionApp {
             });
 
             // Clear form
-            nameInput.value = '';
             questionInput.value = '';
 
             // Show success feedback
@@ -226,7 +221,6 @@ class QuestionApp {
                 <div class="question-card">
                     <div class="question-header">
                         <div class="question-info">
-                            <div class="question-author">${this.escapeHtml(question.author)}</div>
                             <div class="question-time">${timeAgo}</div>
                         </div>
                         <div class="vote-section">
